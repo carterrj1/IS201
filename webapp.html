@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mini Golf</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for canvas and specific elements */
+        canvas {
+            border: 2px solid #c1c1c1;
+            background-color: #2fb92f; /* Green fairway */
+        }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans min-h-screen flex flex-col items-center p-6">
+    <!-- Menu Button -->
+    <div class="absolute top-8 left-20">
+        <a href="index.html" class="inline-block bg-green-600 text-white px-4 py-2 rounded-lg shadow-md hover:bg-indigo-700 transition duration-300">
+            Home
+        </a>
+    </div>
+
+    <!-- Game Container -->
+    <div id="game-container" class="bg-white p-6 rounded-xl shadow-2xl max-w-4xl w-full text-center">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">Mini Golf</h1>
+        <p id="message" class="text-lg text-gray-600 mb-4">Hole 1: Aim with mouse and click to shoot!</p>
+        <canvas id="gameCanvas" width="800" height="600" class="mx-auto rounded-lg"></canvas>
+        <div class="mt-4 flex justify-center gap-4">
+            <button id="restartHole" onclick="restartHole()" class="bg-green-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-green-600 transition duration-300">Restart Hole</button>
+            <button id="nextHole" onclick="nextHole()" class="bg-blue-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-blue-600 transition duration-300 hidden">Next Hole</button>
+            <button id="restartGame" onclick="restartGame()" class="bg-red-500 text-white px-6 py-2 rounded-lg shadow-md hover:bg-red-600 transition duration-300 hidden">Restart Game</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const holes = [
+            { ball: { x: 100, y: 500 }, hole: { x: 700, y: 100 }, obstacles: [
+                { x: 300, y: 300, w: 200, h: 20 }, 
+                { x: 200, y: 200, w: 20, h: 150 }, 
+                { x: 500, y: 150, w: 100, h: 20 }
+            ] },
+            { ball: { x: 100, y: 100 }, hole: { x: 700, y: 500 }, obstacles: [
+                { x: 400, y: 200, w: 20, h: 200 }, 
+                { x: 300, y: 400, w: 150, h: 20 }, 
+                { x: 550, y: 300, w: 20, h: 100 }
+            ] },
+            { ball: { x: 100, y: 300 }, hole: { x: 700, y: 300 }, obstacles: [
+                { x: 300, y: 200, w: 20, h: 200 }, 
+                { x: 500, y: 200, w: 20, h: 200 }, 
+                { x: 400, y: 450, w: 100, h: 20 }
+            ] },
+            { ball: { x: 200, y: 500 }, hole: { x: 600, y: 100 }, obstacles: [
+                { x: 400, y: 300, w: 100, h: 20 }, 
+                { x: 300, y: 150, w: 20, h: 100 }, 
+                { x: 500, y: 200, w: 20, h: 150 }
+            ] },
+            { ball: { x: 100, y: 400 }, hole: { x: 700, y: 400 }, obstacles: [
+                { x: 300, y: 400, w: 200, h: 20 }, 
+                { x: 500, y: 300, w: 20, h: 100 }, 
+                { x: 200, y: 250, w: 100, h: 20 }
+            ] },
+            { ball: { x: 150, y: 150 }, hole: { x: 650, y: 450 }, obstacles: [
+                { x: 350, y: 300, w: 100, h: 20 }, 
+                { x: 450, y: 200, w: 20, h: 100 }, 
+                { x: 250, y: 400, w: 20, h: 100 }
+            ] },
+            { ball: { x: 200, y: 500 }, hole: { x: 600, y: 200 }, obstacles: [
+                { x: 400, y: 350, w: 20, h: 150 }, 
+                { x: 300, y: 200, w: 100, h: 20 }, 
+                { x: 500, y: 300, w: 20, h: 100 }
+            ] },
+            { ball: { x: 100, y: 200 }, hole: { x: 700, y: 400 }, obstacles: [
+                { x: 300, y: 300, w: 200, h: 20 }, 
+                { x: 500, y: 200, w: 20, h: 100 }, 
+                { x: 200, y: 350, w: 20, h: 150 }
+            ] },
+            { ball: { x: 100, y: 500 }, hole: { x: 700, y: 100 }, obstacles: [
+                { x: 400, y: 300, w: 100, h: 20 }, 
+                { x: 300, y: 200, w: 20, h: 100 }, 
+                { x: 500, y: 400, w: 20, h: 100 }, 
+                { x: 250, y: 250, w: 100, h: 20 }
+            ] }
+        ];
+        let currentHole = 0;
+        let ball = { ...holes[0].ball, vx: 0, vy: 0, radius: 10 };
+        let hole = { ...holes[0].hole, radius: 15 };
+        let obstacles = holes[0].obstacles;
+        let strokes = 0;
+        let scoreCard = Array(9).fill(0);
+        let isAiming = true;
+        let isBallMoving = false;
+        let mousePos = { x: 0, y: 0 };
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw score
+            ctx.fillStyle = '#000';
+            ctx.font = '16px Arial';
+            let totalScore = scoreCard.reduce((a, b) => a + b, 0);
+            ctx.fillText(`Hole ${currentHole + 1} | Strokes: ${strokes} | Total Score: ${totalScore}`, 10, 20);
+
+            // Draw walls
+            ctx.fillStyle = '#D2B48C';
+            ctx.fillRect(0, 0, canvas.width, 20);
+            ctx.fillRect(0, canvas.height - 20, canvas.width, 20);
+            ctx.fillRect(0, 0, 20, canvas.height);
+            ctx.fillRect(canvas.width - 20, 0, 20, canvas.height);
+
+            // Draw obstacles
+            ctx.fillStyle = '#595959';
+            obstacles.forEach(obs => {
+                ctx.fillRect(obs.x, obs.y, obs.w, obs.h);
+            });
+
+            // Draw hole
+            ctx.beginPath();
+            ctx.arc(hole.x, hole.y, hole.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#000';
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw ball
+            ctx.beginPath();
+            ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+            ctx.fillStyle = '#FFF';
+            ctx.fill();
+            ctx.closePath();
+
+            // Draw aiming line
+            if (isAiming && !isBallMoving) {
+                ctx.beginPath();
+                ctx.moveTo(ball.x, ball.y);
+                ctx.lineTo(mousePos.x, mousePos.y);
+                ctx.strokeStyle = '#FF0000';
+                ctx.lineWidth = 2;
+                ctx.stroke();
+                ctx.closePath();
+            }
+        }
+
+        function update() {
+            if (!isBallMoving) return;
+
+            ball.x += ball.vx;
+            ball.y += ball.vy;
+            ball.vx *= 0.98; // Friction
+            ball.vy *= 0.98;
+
+            // Wall collisions
+            if (ball.x - ball.radius < 20) { ball.x = 20 + ball.radius; ball.vx = -ball.vx; }
+            if (ball.x + ball.radius > canvas.width - 20) { ball.x = canvas.width - 20 - ball.radius; ball.vx = -ball.vx; }
+            if (ball.y - ball.radius < 20) { ball.y = 20 + ball.radius; ball.vy = -ball.vy; }
+            if (ball.y + ball.radius > canvas.height - 20) { ball.y = canvas.height - 20 - ball.radius; ball.vy = -ball.vy; }
+
+            obstacles.forEach(obs => {
+    // Check for collision between ball and obstacle
+    if (
+        ball.x + ball.radius > obs.x &&
+        ball.x - ball.radius < obs.x + obs.w &&
+        ball.y + ball.radius > obs.y &&
+        ball.y - ball.radius < obs.y + obs.h
+    ) {
+        // Calculate penetration depths for each side
+        let leftPenetration = ball.x + ball.radius - obs.x; // Ball's right edge into left side
+        let rightPenetration = (obs.x + obs.w) - (ball.x - ball.radius); // Ball's left edge into right side
+        let topPenetration = ball.y + ball.radius - obs.y; // Ball's bottom edge into top side
+        let bottomPenetration = (obs.y + obs.h) - (ball.y - ball.radius); // Ball's top edge into bottom side
+
+        // Find the smallest penetration to determine the collision side
+        let penetrations = [
+            { side: 'left', value: leftPenetration },
+            { side: 'right', value: rightPenetration },
+            { side: 'top', value: topPenetration },
+            { side: 'bottom', value: bottomPenetration }
+        ];
+        let minPenetration = penetrations.reduce((min, p) => (p.value < min.value ? p : min), penetrations[0]);
+
+        // Resolve collision based on the side with minimum penetration
+        switch (minPenetration.side) {
+            case 'left':
+                ball.x = obs.x - ball.radius; // Move ball to left edge
+                ball.vx = -Math.abs(ball.vx); // Reverse to move left
+                break;
+            case 'right':
+                ball.x = obs.x + obs.w + ball.radius; // Move to right edge
+                ball.vx = Math.abs(ball.vx); // Reverse to move right
+                break;
+            case 'top':
+                ball.y = obs.y - ball.radius; // Move to top edge
+                ball.vy = -Math.abs(ball.vy); // Reverse to move up
+                break;
+            case 'bottom':
+                ball.y = obs.y + obs.h + ball.radius; // Move to bottom edge
+                ball.vy = Math.abs(ball.vy); // Reverse to move down
+                break;
+        }
+    }
+});
+
+            // Check if ball is in hole
+            let dist = Math.hypot(ball.x - hole.x, ball.y - hole.y);
+            if (dist < hole.radius) {
+                isBallMoving = false;
+                scoreCard[currentHole] = strokes;
+                document.getElementById('message').textContent = `Hole ${currentHole + 1} completed in ${strokes} strokes!`;
+                document.getElementById('nextHole').style.display = 'inline';
+                document.getElementById('restartHole').style.display = 'none';
+                document.getElementById('restartGame').style.display = 'none';
+                return;
+            }
+
+            // Check if ball is out of bounds (beyond canvas)
+            if (ball.x < 0 || ball.x > canvas.width || ball.y < 0 || ball.y > canvas.height) {
+                document.getElementById('message').textContent = `Out of bounds! Restart hole.`;
+                restartHole();
+                return;
+            }
+
+            // Stop ball if velocity is low
+            if (Math.abs(ball.vx) < 0.1 && Math.abs(ball.vy) < 0.1) {
+                ball.vx = 0;
+                ball.vy = 0;
+                isBallMoving = false;
+                isAiming = true;
+            }
+        }
+
+        function shoot() {
+            if (!isAiming || isBallMoving) return;
+            isAiming = false;
+            isBallMoving = true;
+            strokes++;
+            let angle = Math.atan2(mousePos.y - ball.y, mousePos.x - ball.x);
+            let power = 15; // Fixed power for simplicity
+            ball.vx = Math.cos(angle) * power;
+            ball.vy = Math.sin(angle) * power;
+        }
+
+        function restartHole() {
+            ball = { ...holes[currentHole].ball, vx: 0, vy: 0, radius: 10 };
+            strokes = 0;
+            isAiming = true;
+            isBallMoving = false;
+            document.getElementById('message').textContent = `Hole ${currentHole + 1}: Aim with mouse and click to shoot!`;
+            document.getElementById('restartHole').style.display = 'inline';
+            document.getElementById('nextHole').style.display = 'none';
+            document.getElementById('restartGame').style.display = 'none';
+        }
+
+        function nextHole() {
+            currentHole++;
+            if (currentHole >= holes.length) {
+                let totalScore = scoreCard.reduce((a, b) => a + b, 0);
+                document.getElementById('message').textContent = `Game Over! Total Score: ${totalScore}`;
+                document.getElementById('restartHole').style.display = 'none';
+                document.getElementById('nextHole').style.display = 'none';
+                document.getElementById('restartGame').style.display = 'inline';
+                return;
+            }
+            ball = { ...holes[currentHole].ball, vx: 0, vy: 0, radius: 10 };
+            hole = { ...holes[currentHole].hole, radius: 15 };
+            obstacles = holes[currentHole].obstacles;
+            strokes = 0;
+            isAiming = true;
+            isBallMoving = false;
+            document.getElementById('message').textContent = `Hole ${currentHole + 1}: Aim with mouse and click to shoot!`;
+            document.getElementById('restartHole').style.display = 'inline';
+            document.getElementById('nextHole').style.display = 'none';
+            document.getElementById('restartGame').style.display = 'none';
+        }
+
+        function restartGame() {
+            currentHole = 0;
+            ball = { ...holes[0].ball, vx: 0, vy: 0, radius: 10 };
+            hole = { ...holes[0].hole, radius: 15 };
+            obstacles = holes[0].obstacles;
+            strokes = 0;
+            scoreCard = Array(9).fill(0);
+            isAiming = true;
+            isBallMoving = false;
+            document.getElementById('message').textContent = `Hole 1: Aim with mouse and click to shoot!`;
+            document.getElementById('restartHole').style.display = 'inline';
+            document.getElementById('nextHole').style.display = 'none';
+            document.getElementById('restartGame').style.display = 'none';
+        }
+
+        canvas.addEventListener('mousemove', (e) => {
+            let rect = canvas.getBoundingClientRect();
+            mousePos.x = e.clientX - rect.left;
+            mousePos.y = e.clientY - rect.top;
+        });
+
+        canvas.addEventListener('click', shoot);
+
+        function gameLoop() {
+            update();
+            draw();
+            requestAnimationFrame(gameLoop);
+        }
+
+        gameLoop();
+    </script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+/* Center text and set font for headers and main content */
+.paragraph {
+  text-align: center;
+  
+  color: #000000;
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+}
+.Header{
+  color: #0b4681;
+  font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+}
+.tabby{
+  color: rgb(24, 90, 24);
+  font-size: 30px;
+  font-family:Georgia, 'Times New Roman', Times, serif
+}
+body {
+  background-color: #b6d8f1; /* Or any color you like */
+  margin: 0;
+  padding: 0;
+}
+
+  
+.topper{
+  background-color: rgb(66, 151, 91);
+  align-content: center;
+  text-align: center;
+}
+/* Style for all unordered lists (applied universally to avoid inconsistency) */
+.bulletlist,
+main ul {
+  font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif;
+  font-size: large;
+  font-weight: 400;
+  list-style-position: inside;
+  text-align: center;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 600px; /* Optional: limits width for readability */
+}
+
+/* Center ordered lists */
+.centeredlist {
+  list-style-position: outside;
+  text-align: left;
+  margin: 0 auto;
+  padding: 0;
+  max-width: 800px; /* Matches tableau-container for consistency */
+}
+.footy{
+  color: dimgray;
+  font-family:'Courier New', Courier, monospace
+}
+
+/* Responsive images */
+img {
+  border-style: ridge;
+  border-radius: 10px;
+  padding: 10px;
+  width: 20%;
+  height: auto;
+  display: block;
+  margin: 30px auto;
+}
+
+/* Navigation bar */
+nav {
+  background-color: rgb(250, 250, 250);
+  padding: 10px;
+  font-size: 20px;
+  text-align: center;
+}
+.footer1{
+  font-size: 20px;
+  background-color: rgb(255, 255, 255);
+  padding: 15px;
+  text-align: center;
+}
+
+nav a {
+  color: rgb(0, 0, 0);
+  padding: 15px;
+  text-decoration: none;
+  font-weight: bold;
+  margin-right: 10px; /* Moved from inline HTML styles */
+}
+
+nav a:hover {
+  background-color: #0b4681;
+  color: #ffffff; /* White text on hover for better contrast */
+}
+
+/* Tableau visualization container */
+.tableau-container {
+  width: 100%;
+  max-width: 800px;
+  aspect-ratio: 1 / 1;
+  margin: 0 auto;
+}
+
+/* YouTube iframe container */
+.youtube-container {
+  text-align: center;
+  margin: 2rem 0;
+  border-style: double;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  img {
+    max-width: 80%; /* Larger images on small screens */
+  }
+
+  .tableau-container {
+      width: 100%;
+      max-width: 800px;
+      aspect-ratio: 1 / 1;
+      margin: 0 auto;
+    }
+
+  nav a {
+    display: block; /* Stack nav links vertically on small screens */
+    margin: 5px 0;
+  }
+}
